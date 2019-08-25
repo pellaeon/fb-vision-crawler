@@ -1,36 +1,59 @@
-const puppeteer = require('puppeteer');
+const getPostURLs = async (browser, pageName, depth = 12) => {
+  const page = await browser.newPage()
+  await page.goto(`https://www.facebook.com/${pageName}/posts`, {
+    timeout: 60000,
+    waitUntil: 'networkidle2',
+  })
 
-const sleep = async (ms) => {
-	return new Promise((res, rej) => {
-		setTimeout(() => {
-			res();
-		}, ms)
-	});
+  await scrollToBottom(page, depth)
+
+  const postAnchors = await page.$$(`a[href^="/${pageName}/post"]`)
+  let postURLs = await Promise.all(
+    postAnchors.map(
+      a => a.getProperty('href').then(h => h.jsonValue())
+    )
+  )
+
+  postURLs = postURLs
+    .filter(url => !url.match(/posts\/\?/)) // Remove links toward the pages index
+    .map(url => url.replace(/\?_.+/, '')) // Remove useless URL parameters
+    .filter((v, i, s) => s.indexOf(v) === i) // Remove duplicate items
+
+  return postURLs
 }
 
-(async () => {
-	const browser = await puppeteer.launch();
-	const page = await browser.newPage();
-	await page.goto('https://www.facebook.com/Ninjiatext/posts/', {
-		waitUntil: 'networkidle2'
-	});
-	posts = await page.$$('a[href^="/Ninjiatext/post"]');
-	photos = await page.$$('a[href^="/Ninjiatext/photo"]');
-	videos = await page.$$('a[href^="/Ninjiatext/video"]');
-	posts.forEach( async function (post) {
-		try {
-		const propertyHandle = await post.getProperty('value');
-		const propertyValue = await propertyHandle.jsonValue();
+const scrollToBottom = async (page, maxTries = 12) => {
+  // console.debug(`[scrollToBottom] with max tries: ${maxTries}`)
+  const remainingScrollHeight = await page.evaluate(() => document.body.scrollHeight - (document.documentElement.scrollTop + document.documentElement.clientHeight))
+  if (!remainingScrollHeight > 100) return true
 
-		console.log(propertyValue);
-		} catch (e) {
-			console.error(e);
-		}
-	});
-	/*
-	posts.forEach( function (post) {
-	c = await page.evaluate(post => post.href
-	}
-	*/
-	await browser.close();
-})();
+  const { PendingXHR } = require('pending-xhr-puppeteer')
+  const pendingXHR = new PendingXHR(page)
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await page.waitFor(3000)
+  // console.debug(`[scrollToBottom] Waiting for ${pendingXHR.pendingXhrCount()} pending XHR requests to finish...`)
+  await Promise.race([
+    pendingXHR.waitForAllXhrFinished(),
+    new Promise(resolve => setTimeout(resolve, 30000)),
+  ])
+  // console.debug(`[scrollToBottom] XHR requests finished`)
+
+  if (maxTries <= 0) return true
+
+  return scrollToBottom(page, maxTries - 1)
+}
+
+
+const test = async () => {
+  const puppeteer = require('puppeteer')
+  const browser = await puppeteer.launch({
+    // devtools: true,
+  })
+  const postURLs = await getPostURLs(browser, 'Ninjiatext', 8)
+
+  console.log(postURLs)
+
+  await browser.close()
+}
+
+test()

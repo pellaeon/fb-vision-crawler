@@ -1,0 +1,24 @@
+{
+  "name": "fb-vision-crawler",
+  "version": "1.0.0",
+  "description": "",
+  "engines": {
+    "node": ">=10.15"
+  },
+  "main": "facebook-naive.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pellaeon/fb-vision-crawler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pellaeon/fb-vision-crawler/issues"
+  },
+  "homepage": "https://github.com/pellaeon/fb-vision-crawler#readme",
+  "dependencies": {
+    "pending-xhr-puppeteer": "^2.0.0",
+    "puppeteer": "^1.19.0"
+  }
+}
