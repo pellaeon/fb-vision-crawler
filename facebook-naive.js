@@ -44,21 +44,24 @@ const scrollToBottom = async (page, maxTries = 12) => {
 }
 
 // ref: https://www.npmjs.com/package/request-promise#crawl-a-webpage-better
-const fetchSinglePostText = async ( url ) => {
+const fetchSinglePostText = async ( url, retries = 3 ) => {
 	const request = require('request-promise');
 	const cheerio = require('cheerio');
 
-	postText = await request({
-		url: url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
-		method: "GET",
-		proxy: 'http://127.0.0.1:8888',
-		transform: function (body) { return cheerio.load(body); },
-		headers: {
-			'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-		}
-	}).then(function ($) {
-		return $('.userContent').text();
-	}).catch( function (e) { console.error(e) } );
+	let postText = '';
+	while ( postText === '' && retries > 0 ) {
+		postText = await request({
+			url: url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
+			method: "GET",
+			proxy: 'http://127.0.0.1:8888',
+			transform: function (body) { return cheerio.load(body); },
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+			}
+		}).then(function ($) {
+			return $('.userContent').text();
+		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
+	}
 
 	return postText;
 }
@@ -71,7 +74,7 @@ const test = async () => {
   })
   const postURLs = await getPostURLs(browser, 'Ninjiatext', 1)//TODO: increase depth in actual crawl
 
-	postURLs.forEach( async (url) => { const postText = await fetchSinglePostText(url)+"\n----------------\n"; console.log(postText); });
+	postURLs.forEach( async (url) => { const postText = url+"\n-\n"+ await fetchSinglePostText(url)+"\n----------------\n"; console.log(postText); });
 
   await browser.close()
 }
