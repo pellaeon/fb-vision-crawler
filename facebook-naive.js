@@ -1,3 +1,7 @@
+const htmlToText = require('html-to-text')
+
+const htmlToTextOptions = { ignoreHref: true }
+
 const getPostURLs = async (browser, pageName, depth = 12) => {
   const page = await browser.newPage()
   await page.goto(`https://www.facebook.com/${pageName}/posts`, {
@@ -60,7 +64,7 @@ const fetchSinglePostText = async ( url, retries = 3 ) => {
 				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
 			}
 		}).then(function ($) {
-			return $('.userContent').text();
+      return htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
 		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
 	}
 
