@@ -19,6 +19,7 @@
   "homepage": "https://github.com/pellaeon/fb-vision-crawler#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
+    "export-to-csv": "^0.2.1",
     "pending-xhr-puppeteer": "^2.0.0",
     "puppeteer": "^1.19.0",
     "request-promise-native": "^1.0.7"
