@@ -44,8 +44,9 @@ const scrollToBottom = async (page, maxTries = 12) => {
 }
 
 // ref: https://www.npmjs.com/package/request-promise#crawl-a-webpage-better
+// ref: https://dev.to/ycmjason/javascript-fetch-retry-upon-failure-3p6g
 const fetchSinglePostText = async ( url, retries = 3 ) => {
-	const request = require('request-promise');
+	const request = require('request-promise-native');
 	const cheerio = require('cheerio');
 
 	let postText = '';
