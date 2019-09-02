@@ -74,10 +74,12 @@ const fetchSinglePostText = async ( url, retries = 3 ) => {
 
 const test = async () => {
   const puppeteer = require('puppeteer')
+	const { putPage } = require('./ethercalc-client');
   const browser = await puppeteer.launch({
     // devtools: true,
   })
-  const postURLs = await getPostURLs(browser, 'Ninjiatext', 1)//TODO: increase depth in actual crawl
+	var padname = 'Ninjiatext';
+  const postURLs = await getPostURLs(browser, padname, 1)//TODO: increase depth in actual crawl
 
 	var dataarr = new Array();
 	await Promise.all(
@@ -90,6 +92,8 @@ const test = async () => {
 
 	console.log('Fetched '+dataarr.length+' posts');
 	//console.log(dataarr);
+
+	putPage(padname, dataarr);
   await browser.close()
 }
 
