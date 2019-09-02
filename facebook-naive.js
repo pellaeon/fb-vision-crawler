@@ -79,8 +79,17 @@ const test = async () => {
   })
   const postURLs = await getPostURLs(browser, 'Ninjiatext', 1)//TODO: increase depth in actual crawl
 
-	postURLs.forEach( async (url) => { const postText = url+"\n-\n"+ await fetchSinglePostText(url)+"\n----------------\n"; console.log(postText); });
+	var dataarr = new Array();
+	await Promise.all(
+		postURLs.map( async (url) => {
+			const postText = await fetchSinglePostText(url);
+			console.log(url+"\n-\n"+ postText+"\n----------------\n");
+			dataarr.push({url: url, text: postText});
+		})
+	);
 
+	console.log('Fetched '+dataarr.length+' posts');
+	//console.log(dataarr);
   await browser.close()
 }
 
