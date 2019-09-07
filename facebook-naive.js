@@ -49,13 +49,13 @@ const scrollToBottom = async (page, maxTries = 12) => {
 
 // ref: https://www.npmjs.com/package/request-promise#crawl-a-webpage-better
 // ref: https://dev.to/ycmjason/javascript-fetch-retry-upon-failure-3p6g
-const fetchSinglePostText = async ( url, retries = 3 ) => {
+const fetchSinglePost = async ( url, retries = 3 ) => {
 	const request = require('request-promise-native');
 	const cheerio = require('cheerio');
 
-	let postText = '';
-	while ( postText === '' && retries > 0 ) {
-		postText = await request({
+	let postData;
+	while ( !postData && retries > 0 ) {
+		postData = await request({
 			url: url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
 			method: "GET",
 			proxy: 'http://127.0.0.1:8888',
@@ -64,11 +64,28 @@ const fetchSinglePostText = async ( url, retries = 3 ) => {
 				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
 			}
 		}).then(function ($) {
-      return htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
+      let time
+      try {
+        time = $('.userContentWrapper [data-utime]')[0].attribs['data-utime']
+      } catch (e) {
+        time = `[Error]: ${e}`
+      }
+
+      let text
+      try {
+        text = htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
+      } catch (e) {
+        text = time = `[Error]: ${e}`
+      }
+
+      return {
+        time,
+        text,
+      }
 		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
 	}
 
-	return postText;
+	return postData;
 }
 
 
@@ -84,9 +101,9 @@ const test = async () => {
 	var dataarr = new Array();
 	await Promise.all(
 		postURLs.map( async (url) => {
-			const postText = await fetchSinglePostText(url);
-			console.log(url+"\n-\n"+ postText+"\n----------------\n");
-			dataarr.push({url: url, text: postText});
+			const postData = await fetchSinglePost(url);
+			console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
+			dataarr.push({url: url, ...postData });
 		})
 	);
 
