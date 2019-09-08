@@ -28,7 +28,7 @@ const getPostURLs = async (browser, pageName, depth = 12) => {
 }
 
 const scrollToBottom = async (page, maxTries = 12) => {
-  // console.debug(`[scrollToBottom] with max tries: ${maxTries}`)
+  console.debug(`[scrollToBottom] with max tries: ${maxTries}`)
   const remainingScrollHeight = await page.evaluate(() => document.body.scrollHeight - (document.documentElement.scrollTop + document.documentElement.clientHeight))
   if (!remainingScrollHeight > 100) return true
 
