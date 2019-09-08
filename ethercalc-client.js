@@ -37,13 +37,22 @@ const putPage = async function (padname, data) {
 }
 
 const getPage = async function (padname) {
-  const responseBody = await request({
+  const response = await request({
     url: `https://ethercalc.org/_/${padname}/csv.json`,
     method: 'GET',
+	  resolveWithFullResponse: true,
+	  simple: false,//fulfill the promise on 404 as well
   })
-  const responseData = JSON.parse(responseBody)
-  const [headLine, ...lines] = responseData
-  return lines.map(line => line.reduce((obj, v, i) => (obj[headLine[i]] = v, obj), {}))
+	if ( response.statusCode === 200 ) {
+		const responseData = JSON.parse(response.body)
+		const [headLine, ...lines] = responseData
+		return lines.map(line => line.reduce((obj, v, i) => (obj[headLine[i]] = v, obj), {}))
+	} else if ( response.statusCode === 404 ) {
+		debugger;
+		return [];
+	} else {
+		throw new Error('Getting Etherpad '+padname+' failed!');
+	}
 }
 
 // TODO: this method is not used for now but kept for future use
