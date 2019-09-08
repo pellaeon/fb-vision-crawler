@@ -12,8 +12,11 @@ const getPostURLs = async (browser, pageName, depth = 12) => {
 
   await scrollToBottom(page, depth)
 
-  const postAnchors = await page.$$(`a[href^="/${pageName}/post"]`)
-  let postURLs = await Promise.all(
+  let postAnchors = [];
+	postAnchors = await page.$$(`a[href^="/${pageName}/post"]`)
+  let postURLs = [];
+	if ( postAnchors.length === 0 ) postAnchors = await page.$$('a[href^="/permalink.php?story_fbid="]');
+	postURLs = await Promise.all(
     postAnchors.map(
       a => a.getProperty('href').then(h => h.jsonValue())
     )
