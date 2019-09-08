@@ -70,6 +70,7 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
         time = $('.userContentWrapper [data-utime]')[0].attribs['data-utime']
       } catch (e) {
         time = `[Error]: ${e}`
+		  //console.debug($.html());
       }
 
       let text
@@ -77,7 +78,7 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
         text = htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
       } catch (e) {
 		  console.error(e);
-		  console.debug($);
+		  //console.debug($.html());
         text = `[Error]: ${e}`
       }
 
@@ -107,7 +108,6 @@ const fullCrawl = async () => {
 	await Promise.all(
 		postURLs.map( async (url) => {
 			const postData = await fetchSinglePost(url);
-			console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
 			let index = dataarr.findIndex( (e) => { return e.url === url;} );
 			if ( index === -1 ) {
 				dataarr.push({url: url, ...postData });
