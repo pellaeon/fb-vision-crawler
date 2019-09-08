@@ -75,6 +75,8 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
       try {
         text = htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
       } catch (e) {
+		  console.error(e);
+		  console.debug($);
         text = `[Error]: ${e}`
       }
 
