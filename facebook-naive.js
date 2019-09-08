@@ -60,7 +60,7 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 	let postData;
 	while ( !postData && retries > 0 ) {
 		postData = await request({
-			url: url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
+			url: url.includes('?') ? url+'&_fb_noscript=1' : url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
 			method: "GET",
 			proxy: 'http://127.0.0.1:8888',
 			transform: function (body) { return cheerio.load(body); },
