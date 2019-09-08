@@ -1,4 +1,22 @@
 const htmlToText = require('html-to-text')
+const yargs = require('yargs');
+
+const argv = yargs
+	.option('scroll-depth', {
+		alias: 'd',
+		description: 'How many times to scroll to bottom to get post links. Larger depth will obtain more old posts.',
+		type: 'number',
+		default: 1,
+	})
+	.option('pagename', {
+		alias: 'n',
+		description: 'Which facebook page to crawl.',
+		type: 'string',
+		default: 'Ninjiatext',
+	})
+	.help()
+	.alias('help', 'h')
+	.argv;
 
 const htmlToTextOptions = { ignoreHref: true }
 
@@ -97,8 +115,9 @@ const test = async () => {
   const browser = await puppeteer.launch({
     // devtools: true,
   })
-	var padname = 'Ninjiatext';
-  const postURLs = await getPostURLs(browser, padname, 1)//TODO: increase depth in actual crawl
+	var padname = argv['pagename'];
+	debugger;
+  const postURLs = await getPostURLs(browser, padname, argv['scroll-depth'])
 
 	let dataarr = await getPage(padname);
 	await Promise.all(
