@@ -91,19 +91,27 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 
 const test = async () => {
   const puppeteer = require('puppeteer')
-	const { putPage } = require('./ethercalc-client');
+	const { putPage, getPage } = require('./ethercalc-client');
   const browser = await puppeteer.launch({
     // devtools: true,
   })
 	var padname = 'Ninjiatext';
   const postURLs = await getPostURLs(browser, padname, 1)//TODO: increase depth in actual crawl
 
-	var dataarr = new Array();
+	let dataarr = await getPage(padname);
 	await Promise.all(
 		postURLs.map( async (url) => {
 			const postData = await fetchSinglePost(url);
 			console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
-			dataarr.push({url: url, ...postData });
+			debugger;
+			let index = dataarr.findIndex( (e) => { return e.url === url;} );
+			if ( index === -1 ) {
+				dataarr.push({url: url, ...postData });
+				console.debug('New post: '+ url);
+			} else {
+				Object.assign(dataarr[index], postData);
+				console.debug('Post updated: '+url);
+			}
 		})
 	);
 

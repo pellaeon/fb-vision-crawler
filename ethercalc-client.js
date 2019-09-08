@@ -46,9 +46,20 @@ const getPage = async function (padname) {
   return lines.map(line => line.reduce((obj, v, i) => (obj[headLine[i]] = v, obj), {}))
 }
 
+const updatePage = async function (padname, newdata) {
+	let olddata = await getPage(padname);
+
+	const merged = [...olddata.concat(newdata).reduce((m, o) => 
+		m.set(o.url, Object.assign(m.get(o.url) || {}, o))
+		, new Map()).values()];
+
+	return putPage(padname, merged);
+}
+
 module.exports = {
   putPage,
   getPage,
+  updatePage,
 }
 
 const test = async function () {
