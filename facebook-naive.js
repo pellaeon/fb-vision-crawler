@@ -1,23 +1,6 @@
 const htmlToText = require('html-to-text')
 const yargs = require('yargs');
 
-const argv = yargs
-	.option('scroll-depth', {
-		alias: 'd',
-		description: 'How many times to scroll to bottom to get post links. Larger depth will obtain more old posts.',
-		type: 'number',
-		default: 1,
-	})
-	.option('pagename', {
-		alias: 'n',
-		description: 'Which facebook page to crawl.',
-		type: 'string',
-		default: 'Ninjiatext',
-	})
-	.help()
-	.alias('help', 'h')
-	.argv;
-
 const htmlToTextOptions = { ignoreHref: true }
 
 const getPostURLs = async (browser, pageName, depth = 12) => {
@@ -104,12 +87,13 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
       }
 		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
 	}
+	console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
 
 	return postData;
 }
 
 
-const test = async () => {
+const fullCrawl = async () => {
   const puppeteer = require('puppeteer')
 	const { putPage, getPage } = require('./ethercalc-client');
   const browser = await puppeteer.launch({
@@ -142,4 +126,21 @@ const test = async () => {
   await browser.close()
 }
 
-test()
+const argv = yargs
+	.command(['full', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {}, (argv) => { fullCrawl(); })
+	.option('scroll-depth', {
+		alias: 'd',
+		description: 'How many times to scroll to bottom to get post links. Larger depth will obtain more old posts.',
+		type: 'number',
+		default: 1,
+	})
+	.option('pagename', {
+		alias: 'n',
+		description: 'Which facebook page to crawl.',
+		type: 'string',
+		default: 'Ninjiatext',
+	})
+	.command('single <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
+	.help()
+	.alias('help', 'h')
+	.argv;
