@@ -105,7 +105,6 @@ const test = async () => {
 		postURLs.map( async (url) => {
 			const postData = await fetchSinglePost(url);
 			console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
-			debugger;
 			let index = dataarr.findIndex( (e) => { return e.url === url;} );
 			if ( index === -1 ) {
 				dataarr.push({url: url, ...postData });
