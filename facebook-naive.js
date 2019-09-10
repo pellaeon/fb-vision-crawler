@@ -12,20 +12,37 @@ const getPostURLs = async (browser, pageName, depth = 12) => {
 
   await scrollToBottom(page, depth)
 
-  let postAnchors = [];
-	postAnchors = await page.$$(`a[href^="/${pageName}/post"]`)
-  let postURLs = [];
-	if ( postAnchors.length === 0 ) postAnchors = await page.$$('a[href^="/permalink.php?story_fbid="]');
-	postURLs = await Promise.all(
-    postAnchors.map(
-      a => a.getProperty('href').then(h => h.jsonValue())
-    )
-  )
+	let postAnchors = [];
+	postAnchors = await page.$$(`a[href^="/${pageName}/post"]`);
+	let permalinkType = false;
+	if ( postAnchors.length === 0 ) {
+		postAnchors = await page.$$('a[href^="/permalink.php?story_fbid="]');
+		permalinkType = true;
+	}
 
-  postURLs = postURLs
-    .filter(url => !url.match(/posts\/\?/)) // Remove links toward the pages index
-    .map(url => url.replace(/\?_.+/, '')) // Remove useless URL parameters
-    .filter((v, i, s) => s.indexOf(v) === i) // Remove duplicate items
+	let postURLs = [];
+	postURLs = await Promise.all(
+		postAnchors.map(
+			a => a.getProperty('href').then(h => h.jsonValue())
+		)
+	)
+
+	if ( permalinkType ) {
+		const mod_url = require('url');
+		postURLs = postURLs.map( url => {
+			let urlobj = new mod_url.URL(url);
+			for (const name of urlobj.searchParams.keys() ) {
+				if ( name !== 'story_fbid' && name !== 'id' ) urlobj.searchParams.delete(name);
+			}
+			console.log('========'+urlobj.toString());
+			return urlobj.toString();
+		});
+	} else {
+		postURLs = postURLs
+			.filter(url => !url.match(/posts\/\?/)) // Remove links toward the pages index
+			.map(url => url.replace(/\?_.+/, '')) // Remove useless URL parameters
+			.filter((v, i, s) => s.indexOf(v) === i) // Remove duplicate items
+	}
 
   return postURLs
 }
