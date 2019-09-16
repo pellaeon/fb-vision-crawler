@@ -113,6 +113,10 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 	return postData;
 }
 
+function isASCII(str) {
+	return /^[\x00-\x7F]*$/.test(str);
+}
+
 
 const fullCrawl = async () => {
   const puppeteer = require('puppeteer')
@@ -121,7 +125,9 @@ const fullCrawl = async () => {
     // devtools: true,
   })
 	var padname = argv['pagename'];
-	debugger;
+	if ( ! isASCII(padname) ) {// if ASCII name not set, use numeric name
+		padname = padname.match(/\d+$/);
+	}
   const postURLs = await getPostURLs(browser, padname, argv['scroll-depth'])
 
 	let dataarr = await getPage(padname);
