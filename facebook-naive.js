@@ -85,27 +85,30 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
 			}
 		}).then(function ($) {
-      let time
-      try {
-        time = $('.userContentWrapper [data-utime]')[0].attribs['data-utime']
-      } catch (e) {
-        time = `[Error]: ${e}`
-		  //console.debug($.html());
-      }
+			let posttime
+				try {
+					posttime = $('.userContentWrapper [data-utime]')[0].attribs['data-utime']
+				} catch (e) {
+					posttime = `[Error]: ${e}`
+						//console.debug($.html());
+				}
 
-      let text
-      try {
-        text = htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
-      } catch (e) {
-		  console.error(e);
-		  //console.debug($.html());
-        text = `[Error]: ${e}`
-      }
+			let text
+				try {
+					text = htmlToText.fromString($('.userContent').toString(), htmlToTextOptions)
+				} catch (e) {
+					console.error(e);
+					//console.debug($.html());
+					text = `[Error]: ${e}`
+				}
 
-      return {
-        time,
-        text,
-      }
+			let crawled_time = Math.floor(Date.now() / 1000);
+
+			return {
+				posttime,
+				text,
+				crawled_time,
+			}
 		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
 	}
 	console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
