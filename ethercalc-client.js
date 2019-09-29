@@ -45,6 +45,9 @@ const getPage = async function (padname) {
   })
 	if ( response.statusCode === 200 ) {
 		const responseData = JSON.parse(response.body)
+		if ( Array.isArray(responseData) && Array.isArray(responseData[0]) && responseData[0][0] === '' ) {//this means the page exists but is empty
+			return [];
+		}
 		const [headLine, ...lines] = responseData
 		return lines.map(line => line.reduce((obj, v, i) => (obj[headLine[i]] = v, obj), {}))
 	} else if ( response.statusCode === 404 ) {
