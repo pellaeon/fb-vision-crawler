@@ -80,6 +80,7 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 			url: url.includes('?') ? url+'&_fb_noscript=1' : url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
 			method: "GET",
 			proxy: 'http://127.0.0.1:8888',
+			timeout: 30000,
 			transform: function (body) { return cheerio.load(body); },
 			headers: {
 				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
