@@ -76,7 +76,8 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 
 	let postData;
 	while ( !postData && retries > 0 ) {
-		postData = await request({
+		let crawled_time = Math.floor(Date.now() / 1000);
+		let postDataPromise = request({
 			url: url.includes('?') ? url+'&_fb_noscript=1' : url+'?_fb_noscript=1',// if we don't add _fb_noscript=1 , .userContent does not exist in html
 			method: "GET",
 			proxy: 'http://127.0.0.1:8888',
@@ -103,14 +104,16 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 					text = `[Error]: ${e}`
 				}
 
-			let crawled_time = Math.floor(Date.now() / 1000);
-
 			return {
 				posttime,
 				text,
 				crawled_time,
 			}
 		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
+		let timeoutPromise = new Promise(function(resolve, reject) {
+			setTimeout(resolve, 30000, {posttime: '', text: '[Error]: fetchSinglePost timeout', crawled_time});
+		});
+		postData = await Promise.race([postDataPromise, timeoutPromise]);
 	}
 	console.log(url+"\n-\n"+ postData.text+"\n----------------\n");
 
