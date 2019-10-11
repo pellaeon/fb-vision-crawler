@@ -134,7 +134,12 @@ const fullCrawl = async () => {
 	}
   const postURLs = await getPostURLs(browser, padname, argv['scroll-depth'])
 
-	let dataarr = await getPage(padname);
+	try {
+		let dataarr = await getPage(padname);
+	} catch (e) {
+		console.error(e);
+		process.exit(1);
+	}
 	await Promise.all(
 		postURLs.map( async (url) => {
 			const postData = await fetchSinglePost(url);
