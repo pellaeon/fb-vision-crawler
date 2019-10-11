@@ -11,6 +11,9 @@ while read -r line; do
 	fi
 	echo "Name read from file - $name"
 	node facebook-naive.js -n "$name" -d 20
-	sed -i "s/$name/$name\tfinished/" $filename
+	if [ $? -eq 0 ]
+	then
+		sed -i "s/$name/$name\tfinished/" $filename
+	fi
 	sleep 1
 done < "$filename"
