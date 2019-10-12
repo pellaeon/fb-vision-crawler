@@ -197,7 +197,8 @@ const fullCrawl = async () => {
 	console.log('Fetched '+dataarr.length+' posts');
 	//console.log(dataarr);
 
-	putPage(padname, dataarr);
+	try { putPage(padname, dataarr);
+	} catch (e) { console.error(e); process.exit(1); }
 	console.debug('putPage complete, waiting browser close');
   await browser.close()
 }
