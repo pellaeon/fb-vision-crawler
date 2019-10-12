@@ -167,7 +167,7 @@ const fullCrawl = async () => {
 			}
 		}),
 		(p) => {
-			console.log(`Fetch single post progress: ${p.toFixed(2)}`);
+			console.log(`Fetch single post progress: ${p.toFixed(2)}%`);
 		}
 	);
 
@@ -175,6 +175,7 @@ const fullCrawl = async () => {
 	//console.log(dataarr);
 
 	putPage(padname, dataarr);
+	console.debug('putPage complete, waiting browser close');
   await browser.close()
 }
 
