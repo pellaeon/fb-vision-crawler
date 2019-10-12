@@ -103,6 +103,15 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 					text = `[Error]: ${e}`
 				}
 
+			let attachment_element_str = '.userContent + div';
+			let attachment_link;
+			debugger;
+			try {
+				attachment_link = $(attachment_element_str+' a').attribs['href'];
+			} catch (e) {
+				console.debug(e);
+			}
+
 			let crawled_time = Math.floor(Date.now() / 1000);
 
 			return {
@@ -121,6 +130,7 @@ function isASCII(str) {
 	return /^[\x00-\x7F]*$/.test(str);
 }
 
+// Tracks Promise.all progress https://stackoverflow.com/a/42342373
 function allProgress(proms, progress_cb) {
 	let d = 0;
 	progress_cb(0);
