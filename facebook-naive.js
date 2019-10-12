@@ -104,13 +104,20 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 				}
 
 			let attachment_element_str = '.userContent + div';
-			let attachment_link;
-			debugger;
-			try {
-				attachment_link = $(attachment_element_str+' a').attribs['href'];
-			} catch (e) {
-				console.debug(e);
-			}
+			try { var attachment_link = $(attachment_element_str+' a')[0].attribs['href'];
+			} catch (e) { console.debug(e); }
+			try { var attachment_img = $(attachment_element_str+' img')[0].attribs['src'];
+				var attachment_img_alt = $(attachment_element_str+' img')[0].attribs['aria-label'];
+			} catch (e) { console.debug(e); }
+			try { var attachment_title_ = $(attachment_element_str+' a');
+				let i;
+				for (i=0; i<attachment_title_.length; i++) {
+					if ( attachment_title_.eq(i).text() !== '') break;
+				}
+				var attachment_title = attachment_title_.eq(i).text();
+				var attachment_brief = attachment_title_.eq(i).parent().next().text();
+				debugger;
+			} catch (e) { console.debug(e); }
 
 			let crawled_time = Math.floor(Date.now() / 1000);
 
@@ -118,6 +125,11 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 				posttime,
 				text,
 				crawled_time,
+				attachment_link,
+				attachment_img,
+				attachment_img_alt,
+				attachment_title,
+				attachment_brief,
 			}
 		}).catch( function (e) { console.error(e.options.url + ' failed with ' + e.message + ' , retries=' + retries); retries -= 1; return ''; } );
 	}
