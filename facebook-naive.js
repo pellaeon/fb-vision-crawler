@@ -83,7 +83,8 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 			timeout: 30000,
 			transform: function (body) { return cheerio.load(body); },
 			headers: {
-				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+				'Accept-Language': 'en-US,en;q=0.5'
 			}
 		}).then(function ($) {
 			let posttime
