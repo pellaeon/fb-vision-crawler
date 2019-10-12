@@ -124,6 +124,17 @@ function isASCII(str) {
 	return /^[\x00-\x7F]*$/.test(str);
 }
 
+function allProgress(proms, progress_cb) {
+	let d = 0;
+	progress_cb(0);
+	for (const p of proms) {
+		p.then(()=> {
+			d ++;
+			progress_cb( (d * 100) / proms.length );
+		});
+	}
+	return Promise.all(proms);
+}
 
 const fullCrawl = async () => {
   const puppeteer = require('puppeteer')
@@ -138,12 +149,12 @@ const fullCrawl = async () => {
   const postURLs = await getPostURLs(browser, padname, argv['scroll-depth'])
 
 	try {
-		let dataarr = await getPage(padname);
+		var dataarr = await getPage(padname);
 	} catch (e) {
 		console.error(e);
 		process.exit(1);
 	}
-	await Promise.all(
+	await allProgress(
 		postURLs.map( async (url) => {
 			const postData = await fetchSinglePost(url);
 			let index = dataarr.findIndex( (e) => { return e.url === url;} );
@@ -154,7 +165,10 @@ const fullCrawl = async () => {
 				Object.assign(dataarr[index], postData);
 				console.debug('Post updated: '+url);
 			}
-		})
+		}),
+		(p) => {
+			console.log(`Fetch single post progress: ${p.toFixed(2)}`);
+		}
 	);
 
 	console.log('Fetched '+dataarr.length+' posts');
