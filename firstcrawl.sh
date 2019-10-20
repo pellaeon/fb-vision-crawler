@@ -10,7 +10,7 @@ while read -r line; do
 		continue
 	fi
 	echo "Name read from file - $name"
-	node facebook-naive.js -n "$name" -d 20
+	timeout -k 30m 10m node facebook-naive.js -n "$name" -d 20
 	if [ $? -eq 0 ]
 	then
 		sed -i "s/$name/$name\tfinished/" $filename
