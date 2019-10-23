@@ -203,6 +203,24 @@ const fullCrawl = async () => {
   await browser.close()
 }
 
+async function getPagePostFreq(pagename) {
+	const { putPage, getPage } = require('./ethercalc-client');
+	let data = await getPage(pagename);
+	if ( data.length === 0 ) throw Error("This page has not been crawled!");
+	// filter out different crawls of the same post by assuming 
+	// no different posts will have the same posttime
+	// and sort big to small
+	const uniq_time = [...new Set(data.map( post => post.posttime ))].map(a => Number.parseInt(a) ).sort((a,b) => b - a).filter( a => Number.isInteger(a) );
+	let time_diff = [];
+	for ( i=0; i<uniq_time.length-1; i++ ) {
+		time_diff.push(uniq_time[i]-uniq_time[i+1]);
+	}
+	console.debug(time_diff);
+	const average_between_post = time_diff.reduce((a, v) => a+v) / time_diff.length;
+
+	console.log('Average post frequency (second): '+average_between_post);
+}
+
 const argv = yargs
 	.command(['full', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {}, (argv) => { fullCrawl(); })
 	.option('scroll-depth', {
@@ -218,6 +236,7 @@ const argv = yargs
 		default: 'Ninjiatext',
 	})
 	.command('single <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
+	.command('postfreq <pagename>', 'Calculate post frequency for crawled page', () => {}, (argv) => { getPagePostFreq(argv['pagename']) })
 	.help()
 	.alias('help', 'h')
 	.argv;
