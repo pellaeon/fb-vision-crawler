@@ -58,6 +58,35 @@ const getPage = async function (padname) {
 	}
 }
 
+const verifyPage = async function (padname) {
+  const response = await request({
+    url: `https://ethercalc.org/_/${padname}/csv.json`,
+    method: 'GET',
+	  resolveWithFullResponse: true,
+	  simple: false,//fulfill the promise on 404 as well
+  })
+	if ( response.statusCode === 200 ) {
+		const responseData = JSON.parse(response.body)
+		if ( Array.isArray(responseData) && Array.isArray(responseData[0]) && responseData[0][0] === '' ) {//this means the page exists but is empty
+			console.debug('getPage: exists but empty');
+			process.exit(1);
+		}
+		const [headLine, ...lines] = responseData
+		var data = lines.map(line => line.reduce((obj, v, i) => (obj[headLine[i]] = v, obj), {}))
+		if ( Object.keys(data[0]).indexOf('url') === -1 ) {
+			console.log('Data does not contain `url` column, data format invalid');
+			process.exit(4);
+		} else {
+			process.exit(0);
+		}
+	} else if ( response.statusCode === 404 ) {// page does not exist
+		console.debug('Page does not exist');
+		process.exit(2);
+	} else {
+		process.exit(3);
+	}
+}
+
 // TODO: this method is not used for now but kept for future use
 const updatePage = async function (padname, newdata) {
 	let olddata = await getPage(padname);
@@ -73,6 +102,7 @@ module.exports = {
   putPage,
   getPage,
   updatePage,
+  verifyPage,
 }
 
 const test = async function () {
@@ -94,5 +124,3 @@ const test = async function () {
   const getResult = await getPage(pageName)
   console.log('getResult', getResult)
 }
-
-test()

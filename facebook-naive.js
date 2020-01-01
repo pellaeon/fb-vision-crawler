@@ -187,6 +187,8 @@ const fullCrawl = async () => {
 			} else {
 				Object.assign(dataarr[index], postData);
 				console.debug('Post updated: '+url);
+				console.debug(postData);
+				console.debug(dataarr[index]);
 			}
 		}),
 		(p) => {
@@ -237,6 +239,7 @@ const argv = yargs
 	})
 	.command('single <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
 	.command('postfreq <pagename>', 'Calculate post frequency for crawled page', () => {}, (argv) => { getPagePostFreq(argv['pagename']) })
+	.command('verify <pagename>', 'Verify crawled data on Ethercalc', () => {}, (argv) => { const { verifyPage } = require('./ethercalc-client'); verifyPage(argv['pagename']); })
 	.help()
 	.alias('help', 'h')
 	.argv;
