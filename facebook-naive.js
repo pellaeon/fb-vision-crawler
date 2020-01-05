@@ -167,7 +167,7 @@ function init() {
   return browser
 }
 
-const fullCrawl = async (browser, pagename, scrolldepth) => {
+const crawlSingleFbpage = async (browser, pagename, scrolldepth) => {
 	const { putPage, getPage } = require('./ethercalc-client');
 	var padname = pagename;
 	if ( ! isASCII(padname) ) {// if ASCII name not set, use numeric name
@@ -237,11 +237,11 @@ async function getPagePostFreq(pagename) {
 }
 
 const argv = yargs
-	.command(['full', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {},
+	.command(['page', 'singlefbpage', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {},
 			(argv) => {
 				init().then(
 						browser => {
-							fullCrawl(browser, argv['pagename'], argv['scroll-depth']);
+							crawlSingleFbpage(browser, argv['pagename'], argv['scroll-depth']);
 						}
 						);
 			})
@@ -257,7 +257,7 @@ const argv = yargs
 		type: 'string',
 		default: 'Ninjiatext',
 	})
-	.command('single <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
+	.command('post <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
 	.command('postfreq <pagename>', 'Calculate post frequency for crawled page', () => {}, (argv) => { getPagePostFreq(argv['pagename']) })
 	.command('verify <pagename>', 'Verify crawled data on Ethercalc', () => {}, (argv) => { const { verifyPage } = require('./ethercalc-client'); verifyPage(argv['pagename']); })
 	.help()
