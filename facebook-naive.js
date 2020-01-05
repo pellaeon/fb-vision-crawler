@@ -3,20 +3,19 @@ const yargs = require('yargs');
 
 const htmlToTextOptions = { ignoreHref: true }
 
-const getPostURLs = async (browser, pageName, depth = 12) => {
-  const page = await browser.newPage()
-  await page.goto(`https://www.facebook.com/${pageName}/posts`, {
+const getPostURLs = async (browserpage, pageName, depth = 12) => {
+  await browserpage.goto(`https://www.facebook.com/${pageName}/posts`, {
     timeout: 60000,
     waitUntil: 'networkidle2',
   }).then(console.log(`Loaded facebook page ${pageName}`));
 
-  await scrollToBottom(page, depth)
+  await scrollToBottom(browserpage, depth)
 
 	let postAnchors = [];
-	postAnchors = await page.$$(`a[href^="/${pageName}/post"]`);
+	postAnchors = await browserpage.$$(`a[href^="/${pageName}/post"]`);
 	let permalinkType = false;
 	if ( postAnchors.length === 0 ) {
-		postAnchors = await page.$$('a[href^="/permalink.php?story_fbid="]');
+		postAnchors = await browserpage.$$('a[href^="/permalink.php?story_fbid="]');
 		permalinkType = true;
 	}
 
@@ -167,13 +166,13 @@ function init() {
   return browser
 }
 
-const crawlSingleFbpage = async (browser, pagename, scrolldepth) => {
+const crawlSingleFbpage = async (browserpage, pagename, scrolldepth) => {
 	const { putPage, getPage } = require('./ethercalc-client');
 	var padname = pagename;
 	if ( ! isASCII(padname) ) {// if ASCII name not set, use numeric name
 		padname = padname.match(/\d+$/);
 	}
-  const postURLs = await getPostURLs(browser, padname, scrolldepth)
+  const postURLs = await getPostURLs(browserpage, padname, scrolldepth)
 
 	try {
 		var dataarr = await getPage(padname);
@@ -215,17 +214,44 @@ const crawlSingleFbpage = async (browser, pagename, scrolldepth) => {
 	//await browser.close()
 }
 
-async function crawlMultipleFbpages(pagename_list, scrolldepth) {
+async function crawlMultipleFbpages(pagenames_list, scrolldepth) {
+	var pagenames = require('fs').readFileSync(pagenames_list, 'utf8').split("\n");
 	const browser = await init();
+	const browserpage = await browser.newPage();
+	for (const pagename of pagenames) {
+		if ( pagename.length < 5 ) continue;
+		await crawlSingleFbpage(browserpage, pagename, scrolldepth)
+			.then( dataarr => postProcess('ethercalc', pagename, dataarr) );
+	}
 	await browser.close();
 }
 
-async function postProcess(publish_channel = 'ethercalc' , padname, dataarr) {
-	const { putPage, getPage } = require('./ethercalc-client');
-	switch(publish_channel) {
+async function postProcess(storage = 'ethercalc' , padname, dataarr) {
+	const { putPage } = require('./ethercalc-client');
+	switch(storage) {
 		case 'ethercalc':
 			await putPage(padname, dataarr);
 			break;
+		case 'file':
+		default:
+			const { ExportToCsv } = require('export-to-csv');
+			const options = {
+				fieldSeparator: ',',
+				quoteStrings: '"',
+				decimalSeparator: '.',
+				showLabels: true,
+				showTitle: false,
+				title: padname,
+				useTextFile: false,
+				useBom: true,
+				useKeysAsHeaders: true,
+			};
+			const csvstr = csvExporter.generateCsv(dataarr, true);
+			var fs = require('fs');
+			var wstream = fs.createWriteStream(`${padname}.csv`);
+			wstream.write(csvstr);
+			wstream.end();
+
 	}
 }
 
@@ -250,14 +276,14 @@ async function getPagePostFreq(pagename) {
 const argv = yargs
 	.command(['page', 'singlefbpage', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {},
 			(argv) => {
-				init().then(
-						browser => {
-							crawlSingleFbpage(browser, argv['pagename'], argv['scroll-depth'])
-								.then(dataarr => {
-									postProcess('ethercalc', argv['pagename'], dataarr);
-									browser.close();
-								});
+				init().then( browser => browser.newPage() )
+				.then( browserpage => {
+					crawlSingleFbpage(browserpage, argv['pagename'], argv['scroll-depth'])
+						.then(dataarr => {
+							postProcess('ethercalc', argv['pagename'], dataarr);
+							browserpage.browser().close();
 						});
+				});
 			})
 	.option('scroll-depth', {
 		alias: 'd',
@@ -270,6 +296,13 @@ const argv = yargs
 		description: 'Which facebook page to crawl.',
 		type: 'string',
 		default: 'Ninjiatext',
+	})
+	.command('pages <pagenames_list>', 'Crawl multiple FB pages specified from file', () => {}, (argv) => { crawlMultipleFbpages(argv['pagenames_list'], argv['scroll-depth']); })
+	.option('scroll-depth', {
+		alias: 'd',
+		description: 'How many times to scroll to bottom to get post links. Larger depth will obtain more old posts.',
+		type: 'number',
+		default: 1,
 	})
 	.command('post <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
 	.command('postfreq <pagename>', 'Calculate post frequency for crawled page', () => {}, (argv) => { getPagePostFreq(argv['pagename']) })
