@@ -202,20 +202,31 @@ const crawlSingleFbpage = async (browser, pagename, scrolldepth) => {
 	console.log('Fetched '+dataarr.length+' posts');
 	//console.log(dataarr);
 
-	try {
-		// fix missing keys for old objects
-		if ( Object.keys(dataarr[0]).length < Object.keys(dataarr[dataarr.length-1]).length ) {
-			dataarr.forEach( row => {
-				Object.keys(dataarr[dataarr.length-1]).forEach( key => {
-					if ( !(key in row) ) row[key] = "";
-				});
+	// fix missing keys for old objects
+	if ( Object.keys(dataarr[0]).length < Object.keys(dataarr[dataarr.length-1]).length ) {
+		dataarr.forEach( row => {
+			Object.keys(dataarr[dataarr.length-1]).forEach( key => {
+				if ( !(key in row) ) row[key] = "";
 			});
-		}
+		});
+	}
 	debugger;
-		putPage(padname, dataarr);
-	} catch (e) { console.error(e); process.exit(1); }
-	console.debug('putPage complete, waiting browser close');
-  await browser.close()
+	return dataarr;
+	//await browser.close()
+}
+
+async function crawlMultipleFbpages(pagename_list, scrolldepth) {
+	const browser = await init();
+	await browser.close();
+}
+
+async function postProcess(publish_channel = 'ethercalc' , padname, dataarr) {
+	const { putPage, getPage } = require('./ethercalc-client');
+	switch(publish_channel) {
+		case 'ethercalc':
+			await putPage(padname, dataarr);
+			break;
+	}
 }
 
 async function getPagePostFreq(pagename) {
@@ -241,9 +252,12 @@ const argv = yargs
 			(argv) => {
 				init().then(
 						browser => {
-							crawlSingleFbpage(browser, argv['pagename'], argv['scroll-depth']);
-						}
-						);
+							crawlSingleFbpage(browser, argv['pagename'], argv['scroll-depth'])
+								.then(dataarr => {
+									postProcess('ethercalc', argv['pagename'], dataarr);
+									browser.close();
+								});
+						});
 			})
 	.option('scroll-depth', {
 		alias: 'd',
