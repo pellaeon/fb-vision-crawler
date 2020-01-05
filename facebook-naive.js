@@ -8,7 +8,7 @@ const getPostURLs = async (browser, pageName, depth = 12) => {
   await page.goto(`https://www.facebook.com/${pageName}/posts`, {
     timeout: 60000,
     waitUntil: 'networkidle2',
-  })
+  }).then(console.log(`Loaded facebook page ${pageName}`));
 
   await scrollToBottom(page, depth)
 
@@ -158,17 +158,22 @@ function allProgress(proms, progress_cb) {
 	return Promise.all(proms);
 }
 
-const fullCrawl = async () => {
+function init() {
   const puppeteer = require('puppeteer')
-	const { putPage, getPage } = require('./ethercalc-client');
-  const browser = await puppeteer.launch({
+	  console.log("Initializing browser")
+  const browser = puppeteer.launch({
     // devtools: true,
   })
-	var padname = argv['pagename'];
+  return browser
+}
+
+const fullCrawl = async (browser, pagename, scrolldepth) => {
+	const { putPage, getPage } = require('./ethercalc-client');
+	var padname = pagename;
 	if ( ! isASCII(padname) ) {// if ASCII name not set, use numeric name
 		padname = padname.match(/\d+$/);
 	}
-  const postURLs = await getPostURLs(browser, padname, argv['scroll-depth'])
+  const postURLs = await getPostURLs(browser, padname, scrolldepth)
 
 	try {
 		var dataarr = await getPage(padname);
@@ -232,7 +237,14 @@ async function getPagePostFreq(pagename) {
 }
 
 const argv = yargs
-	.command(['full', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {}, (argv) => { fullCrawl(); })
+	.command(['full', '$0'], 'Crawl a facebook page for posts, and upload them.', () => {},
+			(argv) => {
+				init().then(
+						browser => {
+							fullCrawl(browser, argv['pagename'], argv['scroll-depth']);
+						}
+						);
+			})
 	.option('scroll-depth', {
 		alias: 'd',
 		description: 'How many times to scroll to bottom to get post links. Larger depth will obtain more old posts.',
