@@ -119,7 +119,6 @@ const fetchSinglePost = async ( url, retries = 3 ) => {
 					}
 					attachment_title = attachment_title_.eq(i).text();
 					attachment_brief = attachment_title_.eq(i).parent().next().text();
-					debugger;
 				} catch (e) { console.debug(e); }
 			}
 
@@ -180,6 +179,7 @@ const fullCrawl = async () => {
 	await allProgress(
 		postURLs.map( async (url) => {
 			const postData = await fetchSinglePost(url);
+			// merge existing rows and new rows
 			let index = dataarr.findIndex( (e) => { return e.url === url;} );
 			if ( index === -1 ) {
 				dataarr.push({url: url, ...postData });
@@ -187,8 +187,6 @@ const fullCrawl = async () => {
 			} else {
 				Object.assign(dataarr[index], postData);
 				console.debug('Post updated: '+url);
-				console.debug(postData);
-				console.debug(dataarr[index]);
 			}
 		}),
 		(p) => {
@@ -199,7 +197,17 @@ const fullCrawl = async () => {
 	console.log('Fetched '+dataarr.length+' posts');
 	//console.log(dataarr);
 
-	try { putPage(padname, dataarr);
+	try {
+		// fix missing keys for old objects
+		if ( Object.keys(dataarr[0]).length < Object.keys(dataarr[dataarr.length-1]).length ) {
+			dataarr.forEach( row => {
+				Object.keys(dataarr[dataarr.length-1]).forEach( key => {
+					if ( !(key in row) ) row[key] = "";
+				});
+			});
+		}
+	debugger;
+		putPage(padname, dataarr);
 	} catch (e) { console.error(e); process.exit(1); }
 	console.debug('putPage complete, waiting browser close');
   await browser.close()
