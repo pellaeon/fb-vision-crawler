@@ -214,44 +214,43 @@ const crawlSingleFbpage = async (browserpage, pagename, scrolldepth) => {
 	//await browser.close()
 }
 
-async function crawlMultipleFbpages(pagenames_list, scrolldepth) {
+async function crawlMultipleFbpages(output_ethercalc=true, output_file=false, pagenames_list, scrolldepth) {
 	var pagenames = require('fs').readFileSync(pagenames_list, 'utf8').split("\n");
 	const browser = await init();
 	const browserpage = await browser.newPage();
 	for (const pagename of pagenames) {
 		if ( pagename.length < 5 ) continue;
 		await crawlSingleFbpage(browserpage, pagename, scrolldepth)
-			.then( dataarr => postProcess('ethercalc', pagename, dataarr) );
+			.then( dataarr => 
+					postProcess(output_ethercalc, output_file, pagename, dataarr) );
 	}
 	await browser.close();
 }
 
-async function postProcess(storage = 'ethercalc' , padname, dataarr) {
-	const { putPage } = require('./ethercalc-client');
-	switch(storage) {
-		case 'ethercalc':
-			await putPage(padname, dataarr);
-			break;
-		case 'file':
-		default:
-			const { ExportToCsv } = require('export-to-csv');
-			const options = {
-				fieldSeparator: ',',
-				quoteStrings: '"',
-				decimalSeparator: '.',
-				showLabels: true,
-				showTitle: false,
-				title: padname,
-				useTextFile: false,
-				useBom: true,
-				useKeysAsHeaders: true,
-			};
-			const csvstr = csvExporter.generateCsv(dataarr, true);
-			var fs = require('fs');
-			var wstream = fs.createWriteStream(`${padname}.csv`);
-			wstream.write(csvstr);
-			wstream.end();
-
+async function postProcess(output_ethercalc=true, output_file=false , padname, dataarr) {
+	if ( output_ethercalc ) {
+		const { putPage } = require('./ethercalc-client');
+		await putPage(padname, dataarr);
+	}
+	if ( output_file ) {
+		const { ExportToCsv } = require('export-to-csv');
+		const options = {
+			fieldSeparator: ',',
+			quoteStrings: '"',
+			decimalSeparator: '.',
+			showLabels: true,
+			showTitle: false,
+			title: padname,
+			useTextFile: false,
+			useBom: true,
+			useKeysAsHeaders: true,
+		};
+		const csvExporter = new ExportToCsv(options);
+		const csvstr = csvExporter.generateCsv(dataarr, true);
+		var fs = require('fs');
+		var wstream = fs.createWriteStream(`${padname}.csv`);
+		wstream.write(csvstr);
+		wstream.end();
 	}
 }
 
@@ -280,7 +279,7 @@ const argv = yargs
 				.then( browserpage => {
 					crawlSingleFbpage(browserpage, argv['pagename'], argv['scroll-depth'])
 						.then(dataarr => {
-							postProcess('ethercalc', argv['pagename'], dataarr);
+							postProcess(argv['output-ethercalc'], argv['output-file'], argv['pagename'], dataarr);
 							browserpage.browser().close();
 						});
 				});
@@ -291,18 +290,42 @@ const argv = yargs
 		type: 'number',
 		default: 1,
 	})
+	.option('output-file', {
+		alias: 'f',
+		description: 'Output to file, will be named <pagename>.csv',
+		type: 'boolean',
+		default: false,
+	})
+	.option('output-ethercalc', {
+		alias: 'e',
+		description: 'Output to ethercalc, pad will be named <pagename>',
+		type: 'boolean',
+		default: true,
+	})
 	.option('pagename', {
 		alias: 'n',
 		description: 'Which facebook page to crawl.',
 		type: 'string',
 		default: 'Ninjiatext',
 	})
-	.command('pages <pagenames_list>', 'Crawl multiple FB pages specified from file', () => {}, (argv) => { crawlMultipleFbpages(argv['pagenames_list'], argv['scroll-depth']); })
+	.command('pages <pagenames_list>', 'Crawl multiple FB pages specified from file', () => {}, (argv) => { crawlMultipleFbpages(argv['output-ethercalc'], argv['output-file'], argv['pagenames_list'], argv['scroll-depth']); })
 	.option('scroll-depth', {
 		alias: 'd',
 		description: 'How many times to scroll to bottom to get post links. Larger depth will obtain more old posts.',
 		type: 'number',
 		default: 1,
+	})
+	.option('output-file', {
+		alias: 'f',
+		description: 'Output to file, will be named <pagename>.csv',
+		type: 'boolean',
+		default: false,
+	})
+	.option('output-ethercalc', {
+		alias: 'e',
+		description: 'Output to ethercalc, pad will be named <pagename>',
+		type: 'boolean',
+		default: true,
 	})
 	.command('post <url>', 'Fetch a single post and only show it on screen.', () => {}, (argv) => { fetchSinglePost(argv['url']) })
 	.command('postfreq <pagename>', 'Calculate post frequency for crawled page', () => {}, (argv) => { getPagePostFreq(argv['pagename']) })
