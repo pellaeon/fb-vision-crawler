@@ -216,13 +216,26 @@ const crawlSingleFbpage = async (browserpage, pagename, scrolldepth) => {
 
 async function crawlMultipleFbpages(output_ethercalc=true, output_file=false, pagenames_list, scrolldepth) {
 	var pagenames = require('fs').readFileSync(pagenames_list, 'utf8').split("\n");
-	const browser = await init();
-	const browserpage = await browser.newPage();
+	var browser = await init();
+	var browserpage = await browser.newPage();
+	var pagecount = 0;
 	for (const pagename of pagenames) {
 		if ( pagename.length < 5 ) continue;
+		if ( pagecount % 80 == 0 ) {
+			console.log("Restart browser after some time to avoid memory leak");
+			await browser.close();
+			browser = await init();
+			browserpage = await browser.newPage();
+		}
+		try {
 		await crawlSingleFbpage(browserpage, pagename, scrolldepth)
 			.then( dataarr => 
 					postProcess(output_ethercalc, output_file, pagename, dataarr) );
+		} catch (e) {
+			console.error(e);
+			console.warn(`crawlSingleFbpage ${pagename} failed. Continuing to next one.`);
+		}
+		pagecount++;
 	}
 	await browser.close();
 }
