@@ -4,10 +4,13 @@ const yargs = require('yargs');
 const htmlToTextOptions = { ignoreHref: true }
 
 const getPostURLs = async (browserpage, pageName, depth = 12) => {
-  await browserpage.goto(`https://www.facebook.com/${pageName}/posts`, {
+  let response = await browserpage.goto(`https://www.facebook.com/${pageName}/posts`, {
     timeout: 60000,
     waitUntil: 'networkidle2',
-  }).then(console.log(`Loaded facebook page ${pageName}`));
+  });
+  if ( ! response.ok() )
+	  throw new Error(`Facebook page ${pageName} load failed, code: ${response.status()}`);
+  console.log(`Loaded facebook page ${pageName}`);
 
   await scrollToBottom(browserpage, depth)
 
@@ -172,13 +175,13 @@ const crawlSingleFbpage = async (browserpage, pagename, scrolldepth) => {
 	if ( ! isASCII(padname) ) {// if ASCII name not set, use numeric name
 		padname = padname.match(/\d+$/);
 	}
-  const postURLs = await getPostURLs(browserpage, padname, scrolldepth)
+  const postURLs = await getPostURLs(browserpage, padname, scrolldepth);
 
 	try {
 		var dataarr = await getPage(padname);
 	} catch (e) {
 		console.error(e);
-		process.exit(1);
+		//process.exit(1);
 	}
 	await allProgress(
 		postURLs.map( async (url) => {
@@ -294,7 +297,8 @@ const argv = yargs
 						.then(dataarr => {
 							postProcess(argv['output-ethercalc'], argv['output-file'], argv['pagename'], dataarr);
 							browserpage.browser().close();
-						});
+						})
+						.catch(e => { console.error(e); browserpage.browser().close(); });
 				});
 			})
 	.option('scroll-depth', {
